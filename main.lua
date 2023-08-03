@@ -17,16 +17,16 @@ end
 function love.load()
 	particles = list()
 
-	-- for _=1, 300 do
-	-- 	newParticle(
-	-- 		(love.math.random() > 0.5 and 1 or -1) and 0,
-	-- 		1,
-	-- 		vec2(love.math.random(), love.math.random()) * vec2(100) + vec2(300)
-	-- 	)
-	-- end
-
-	newParticle(1, 1, vec2(300, 300))
-	newParticle(-1, 1, vec2(300, 450))
+	for _=1, 300 do
+		newParticle(
+			{
+				electric = (love.math.random() > 0.5 and 1 or -1) and 0,
+				strange = 0
+			},
+			1,
+			vec2(love.math.random(), love.math.random()) * vec2(100) + vec2(300)
+		)
+	end
 end
 
 function love.mousepressed()
@@ -38,13 +38,27 @@ function love.update(dt)
 	local brushRadius = 1
 	if not love.keyboard.isDown("lshift") or spawnIfHoldingShift then
 		if love.mouse.isDown(1) then
-			newParticle(1, 1, vec2(love.mouse.getPosition()) + randCircle(brushRadius))
+			newParticle(
+				{
+					electric = 1,
+					strange = 0
+				},
+			1, vec2(love.mouse.getPosition()) + randCircle(brushRadius))
 		end
 		if love.mouse.isDown(2) then
-			newParticle(-1, 1, vec2(love.mouse.getPosition()) + randCircle(brushRadius))
+			newParticle(
+				{
+					electric = -1,
+					strange = 0
+				},
+			1, vec2(love.mouse.getPosition()) + randCircle(brushRadius))
 		end
 		if love.mouse.isDown(3) then
-			newParticle(0, 100, vec2(love.mouse.getPosition()) + randCircle(brushRadius))
+				newParticle({
+					electric = 0,
+					strange = 0
+				},
+			100, vec2(love.mouse.getPosition()) + randCircle(brushRadius))
 		end
 	end
 	spawnIfHoldingShift = false
@@ -80,13 +94,13 @@ function love.draw()
 	end
 end
 
-function newParticle(charge, mass, pos)
+function newParticle(charges, mass, pos)
 	local particle = {}
 	particle.position = pos
 	particle.velocity = vec2()
-	particle.charge = charge
+	particle.charges = charges
 	particle.mass = 1
-	particle.colour = {particle.charge, 0.5, -particle.charge, 1}
+	particle.colour = {particle.charges.electric, 0.5, -particle.charges.electric, 1}
 	particles:add(particle)
 end
 
@@ -102,7 +116,7 @@ function electricForce(particleA, particleB, dt)
 		direction = vec2(0, 0)
 	end
 
-	local force = -1 * electricForceStrength * particleA.charge * particleB.charge * math.min(1.0, distance ^ -1)
+	local force = -1 * electricForceStrength * particleA.charges.electric * particleB.charges.electric * math.min(1.0, distance ^ -1)
 	if force ~= force then -- Distance is zero
 		return
 	end
@@ -146,7 +160,7 @@ function personalSpaceForce(particleA, particleB, dt)
 		direction = vec2(0, 0)
 	end
 
-	local force = personalSpaceForceStrength * particleA.charge * particleB.charge * math.min(1.0, distance ^ -5)
+	local force = -1 * personalSpaceForceStrength * math.min(1.0, distance ^ -5)
 	if force ~= force then -- Distance is zero
 		return
 	end
@@ -169,7 +183,7 @@ function strangeForce(particleA, particleB, dt)
 	end
 
 	local offset = 100
-	local force = strangeForceStrength * 1/(math.exp(distance-offset)+math.exp(-(distance-offset))) -- random bell shaped curve: sech
+	local force = strangeForceStrength * particleA.charges.strange * particleB.charges.strange * 1/(math.exp(distance-offset)+math.exp(-(distance-offset))) -- random bell shaped curve: 
 	force = force * direction
 
 	particleA.velocity = particleA.velocity + force / particleA.mass * dt
