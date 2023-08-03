@@ -183,7 +183,7 @@ function strangeForce(particleA, particleB, dt)
 	end
 
 	local offset = 100
-	local force = strangeForceStrength * particleA.charges.strange * particleB.charges.strange * 1/(math.exp(distance-offset)+math.exp(-(distance-offset))) -- random bell shaped curve: 
+	local force = strangeForceStrength * particleA.charges.strange * particleB.charges.strange * 1/(math.exp(distance-offset)+math.exp(-(distance-offset))) -- random bell shaped curve: sech
 	force = force * direction
 
 	particleA.velocity = particleA.velocity + force / particleA.mass * dt
