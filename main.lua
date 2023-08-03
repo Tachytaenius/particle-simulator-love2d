@@ -37,26 +37,34 @@ function love.update(dt)
 	local brushRadius = 1
 	if not love.keyboard.isDown("lshift") or spawnIfHoldingShift then
 		if love.mouse.isDown(1) then
-			newParticle(1, vec2(love.mouse.getPosition()) + randCircle(brushRadius))
+			newParticle(1, 1, vec2(love.mouse.getPosition()) + randCircle(brushRadius))
 		end
 		if love.mouse.isDown(2) then
-			newParticle(-1, vec2(love.mouse.getPosition()) + randCircle(brushRadius))
+			newParticle(-1, 1, vec2(love.mouse.getPosition()) + randCircle(brushRadius))
+		end
+		if love.mouse.isDown(3) then
+			newParticle(0, 20, vec2(love.mouse.getPosition()) + randCircle(brushRadius))
 		end
 	end
 	spawnIfHoldingShift = false
 
 	-- Simulate
-	for i = 1, particles.size do
-		local particle = particles:get(i)
-		particle.position = particle.position + particle.velocity * dt
-	end
-	for i = 1, particles.size - 1 do
-		local particleA = particles:get(i)
+	local timestepDivisions = 1
+	for i = 1, timestepDivisions do
+		local dt = dt / timestepDivisions
+		for i = 1, particles.size do
+			local particle = particles:get(i)
+			particle.position = particle.position + particle.velocity * dt
+		end
+		for i = 1, particles.size - 1 do
+			local particleA = particles:get(i)
 
-		for j = i + 1, particles.size do
-			local particleB = particles:get(j)
-			electricForce(particleA, particleB, dt)
-			-- personalSpaceForce(particleA, particleB, dt)
+			for j = i + 1, particles.size do
+				local particleB = particles:get(j)
+				electricForce(particleA, particleB, dt)
+				-- personalSpaceForce(particleA, particleB, dt)
+				gravitationalForce(particleA, particleB, dt)
+			end
 		end
 	end
 end
@@ -70,7 +78,7 @@ function love.draw()
 	end
 end
 
-function newParticle(charge, pos)
+function newParticle(charge, mass, pos)
 	local particle = {}
 	particle.position = pos
 	particle.velocity = vec2()
@@ -81,7 +89,7 @@ function newParticle(charge, pos)
 end
 
 function electricForce(particleA, particleB, dt)
-	local electricForceStrength = 100
+	local electricForceStrength = 300
 
 	local difference = particleB.position - particleA.position
 	local distance = #difference
@@ -91,8 +99,30 @@ function electricForce(particleA, particleB, dt)
 	else
 		direction = vec2(0, 0)
 	end
-	
-	local force = -1 * electricForceStrength * particleA.charge * particleB.charge * distance ^ -1
+
+	local force = electricForceStrength * particleA.charge * particleB.charge * math.min(1.0, distance ^ -1)
+	if force ~= force then -- Distance is zero
+		return
+	end
+	force = force * direction
+
+	particleA.velocity = particleA.velocity + force / particleA.mass * dt
+	particleB.velocity = particleB.velocity - force / particleB.mass * dt
+end
+
+function gravitationalForce(particleA, particleB, dt)
+	local gravitationalForceStrength = 300
+
+	local difference = particleB.position - particleA.position
+	local distance = #difference
+	local direction
+	if distance > 0 then
+		direction = difference / distance
+	else
+		direction = vec2(0, 0)
+	end
+
+	local force = gravitationalForceStrength * particleA.mass * particleB.mass * math.min(1.0, distance ^ -1)
 	if force ~= force then -- Distance is zero
 		return
 	end
@@ -103,7 +133,7 @@ function electricForce(particleA, particleB, dt)
 end
 
 function personalSpaceForce(particleA, particleB, dt)
-	local personalSpaceForceStrength = 100
+	local personalSpaceForceStrength = 200
 
 	local difference = particleB.position - particleA.position
 	local distance = #difference
@@ -113,8 +143,8 @@ function personalSpaceForce(particleA, particleB, dt)
 	else
 		direction = vec2(0, 0)
 	end
-	
-	local force = personalSpaceForceStrength * particleA.charge * particleB.charge * distance ^ -5
+
+	local force = personalSpaceForceStrength * particleA.charge * particleB.charge * math.min(1.0, distance ^ -5)
 	if force ~= force then -- Distance is zero
 		return
 	end
