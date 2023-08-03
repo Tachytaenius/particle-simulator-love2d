@@ -17,17 +17,31 @@ end
 function love.load()
 	particles = list()
 
- 	for _=1, 400 do
-		local massive = love.math.random() > 0.75
-		local pos = randCircle(200)
+	for _=1, 200 do
+		local massive = love.math.random() > 0
+		local pos = randCircle(10)
 		newParticle(
 			{
 				electric = massive and 0 or love.math.random() > 0.5 and 1 or -1,
 				strange = 0
 			},
 			massive and 1000 or 1,
-			pos + vec2(300, 300),
+			pos + vec2(800, 300),
 			vec2(-pos.y, pos.x) * 0.05
+		)
+	end
+
+	for _=1, 400 do
+		local massive = love.math.random() > 1
+		local pos = randCircle(30)
+		newParticle(
+			{
+				electric = massive and 0 or love.math.random() > 0.5 and 1 or -1,
+				strange = 0
+			},
+			massive and 1000 or 1,
+			pos + vec2(2000, 300),
+			vec2(-pos.y, pos.x) * 0.05 + vec2(-500, 0)
 		)
 	end
 end
