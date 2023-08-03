@@ -11,20 +11,20 @@ local electricForce, personalSpaceForce
 local newParticle
 
 local function randCircle(r)
-	return vec2.rotate(vec2(r, 0), love.math.random() * math.tau)
+	return vec2.rotate(vec2(love.math.random() ^ 0.5 * r, 0), love.math.random() * math.tau)
 end
 
 function love.load()
 	particles = list()
 
-	for _=1, 300 do
+ 	for _=1, 100 do
 		newParticle(
 			{
 				electric = (love.math.random() > 0.5 and 1 or -1) and 0,
 				strange = 0
 			},
 			1,
-			vec2(love.math.random(), love.math.random()) * vec2(100) + vec2(300)
+			randCircle(100) + vec2(300, 300)
 		)
 	end
 end
