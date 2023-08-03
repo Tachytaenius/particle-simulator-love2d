@@ -17,15 +17,16 @@ end
 function love.load()
 	particles = list()
 
-	for _=1, 0 do
-		newParticle(
-			love.math.random() > 0.5 and 1 or -1,
-			vec2(love.math.random(), love.math.random()) * vec2(100) + vec2(300)
-		)
-	end
+	-- for _=1, 300 do
+	-- 	newParticle(
+	-- 		(love.math.random() > 0.5 and 1 or -1) and 0,
+	-- 		1,
+	-- 		vec2(love.math.random(), love.math.random()) * vec2(100) + vec2(300)
+	-- 	)
+	-- end
 
-	-- newParticle(1, vec2(300, 300))
-	-- newParticle(-1, vec2(300, 400))
+	newParticle(1, 1, vec2(300, 300))
+	newParticle(-1, 1, vec2(300, 450))
 end
 
 function love.mousepressed()
@@ -43,7 +44,7 @@ function love.update(dt)
 			newParticle(-1, 1, vec2(love.mouse.getPosition()) + randCircle(brushRadius))
 		end
 		if love.mouse.isDown(3) then
-			newParticle(0, 20, vec2(love.mouse.getPosition()) + randCircle(brushRadius))
+			newParticle(0, 100, vec2(love.mouse.getPosition()) + randCircle(brushRadius))
 		end
 	end
 	spawnIfHoldingShift = false
@@ -64,6 +65,7 @@ function love.update(dt)
 				electricForce(particleA, particleB, dt)
 				-- personalSpaceForce(particleA, particleB, dt)
 				gravitationalForce(particleA, particleB, dt)
+				strangeForce(particleA, particleB, dt)
 			end
 		end
 	end
@@ -148,6 +150,26 @@ function personalSpaceForce(particleA, particleB, dt)
 	if force ~= force then -- Distance is zero
 		return
 	end
+	force = force * direction
+
+	particleA.velocity = particleA.velocity + force / particleA.mass * dt
+	particleB.velocity = particleB.velocity - force / particleB.mass * dt
+end
+
+function strangeForce(particleA, particleB, dt)
+	local strangeForceStrength = 10000
+
+	local difference = particleB.position - particleA.position
+	local distance = #difference
+	local direction
+	if distance > 0 then
+		direction = difference / distance
+	else
+		direction = vec2(0, 0)
+	end
+
+	local offset = 100
+	local force = strangeForceStrength * 1/(math.exp(distance-offset)+math.exp(-(distance-offset))) -- random bell shaped curve: sech
 	force = force * direction
 
 	particleA.velocity = particleA.velocity + force / particleA.mass * dt
