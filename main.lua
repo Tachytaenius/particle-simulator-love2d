@@ -19,13 +19,15 @@ function love.load()
 
  	for _=1, 400 do
 		local massive = love.math.random() > 0.75
+		local pos = randCircle(200)
 		newParticle(
 			{
 				electric = massive and 0 or love.math.random() > 0.5 and 1 or -1,
 				strange = 0
 			},
 			massive and 1000 or 1,
-			randCircle(200) + vec2(300, 300)
+			pos + vec2(300, 300),
+			vec2(-pos.y, pos.x) * 0.05
 		)
 	end
 end
@@ -95,10 +97,10 @@ function love.draw()
 	end
 end
 
-function newParticle(charges, mass, pos)
+function newParticle(charges, mass, pos, vel)
 	local particle = {}
 	particle.position = pos
-	particle.velocity = vec2()
+	particle.velocity = vel or vec2()
 	particle.charges = charges
 	particle.mass = 1
 	particle.colour = {particle.charges.electric, 0.5, -particle.charges.electric, 1}
