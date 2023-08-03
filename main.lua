@@ -7,7 +7,7 @@ local particles
 local spawnIfHoldingShift
 
 -- Functions
-local electricForce, personalSpaceForce
+local electricForce, personalSpaceForce, gravitationalForce, strangeForce
 local newParticle
 
 local function randCircle(r)
