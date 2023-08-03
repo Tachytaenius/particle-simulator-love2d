@@ -17,14 +17,15 @@ end
 function love.load()
 	particles = list()
 
- 	for _=1, 100 do
+ 	for _=1, 400 do
+		local massive = love.math.random() > 0.75
 		newParticle(
 			{
-				electric = (love.math.random() > 0.5 and 1 or -1) and 0,
+				electric = massive and 0 or love.math.random() > 0.5 and 1 or -1,
 				strange = 0
 			},
-			1,
-			randCircle(100) + vec2(300, 300)
+			massive and 1000 or 1,
+			randCircle(200) + vec2(300, 300)
 		)
 	end
 end
@@ -58,7 +59,7 @@ function love.update(dt)
 					electric = 0,
 					strange = 0
 				},
-			100, vec2(love.mouse.getPosition()) + randCircle(brushRadius))
+			1000, vec2(love.mouse.getPosition()) + randCircle(brushRadius))
 		end
 	end
 	spawnIfHoldingShift = false
@@ -77,7 +78,7 @@ function love.update(dt)
 			for j = i + 1, particles.size do
 				local particleB = particles:get(j)
 				electricForce(particleA, particleB, dt)
-				-- personalSpaceForce(particleA, particleB, dt)
+				personalSpaceForce(particleA, particleB, dt)
 				gravitationalForce(particleA, particleB, dt)
 				strangeForce(particleA, particleB, dt)
 			end
@@ -127,7 +128,7 @@ function electricForce(particleA, particleB, dt)
 end
 
 function gravitationalForce(particleA, particleB, dt)
-	local gravitationalForceStrength = 100
+	local gravitationalForceStrength = 1
 
 	local difference = particleB.position - particleA.position
 	local distance = #difference
@@ -149,7 +150,7 @@ function gravitationalForce(particleA, particleB, dt)
 end
 
 function personalSpaceForce(particleA, particleB, dt)
-	local personalSpaceForceStrength = 200
+	local personalSpaceForceStrength = 2000
 
 	local difference = particleB.position - particleA.position
 	local distance = #difference
@@ -160,7 +161,9 @@ function personalSpaceForce(particleA, particleB, dt)
 		direction = vec2(0, 0)
 	end
 
-	local force = -1 * personalSpaceForceStrength * math.min(1.0, distance ^ -5)
+	local velocityDifference = particleB.velocity - particleA.velocity
+	local motionTowardsEachOther = vec2.dot(velocityDifference, -difference)
+	local force = math.max(-1, -1 * personalSpaceForceStrength * distance ^ -5) * motionTowardsEachOther
 	if force ~= force then -- Distance is zero
 		return
 	end
