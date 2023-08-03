@@ -89,7 +89,7 @@ function newParticle(charge, mass, pos)
 end
 
 function electricForce(particleA, particleB, dt)
-	local electricForceStrength = 300
+	local electricForceStrength = 500
 
 	local difference = particleB.position - particleA.position
 	local distance = #difference
@@ -111,7 +111,7 @@ function electricForce(particleA, particleB, dt)
 end
 
 function gravitationalForce(particleA, particleB, dt)
-	local gravitationalForceStrength = 300
+	local gravitationalForceStrength = 100
 
 	local difference = particleB.position - particleA.position
 	local distance = #difference
