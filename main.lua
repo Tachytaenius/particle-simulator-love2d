@@ -100,7 +100,7 @@ function electricForce(particleA, particleB, dt)
 		direction = vec2(0, 0)
 	end
 
-	local force = electricForceStrength * particleA.charge * particleB.charge * math.min(1.0, distance ^ -1)
+	local force = -1 * electricForceStrength * particleA.charge * particleB.charge * math.min(1.0, distance ^ -1)
 	if force ~= force then -- Distance is zero
 		return
 	end
