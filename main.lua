@@ -7,12 +7,16 @@ local particles
 local spawnIfHoldingShift
 
 -- Functions
-local electricForce, personalSpaceForce, gravitationalForce, strangeForce
 local newParticle
 
 local function randCircle(r)
 	return vec2.rotate(vec2(love.math.random() ^ 0.5 * r, 0), love.math.random() * math.tau)
 end
+
+--[[
+	Charges:
+	Electric: Real number
+]]
 
 function love.load()
 	particles = list()
@@ -22,8 +26,7 @@ function love.load()
 		local pos = randCircle(150)
 		newParticle(
 			{
-				electric = massive and 0 or love.math.random() > 0.5 and 1 or -1,
-				strange = 0
+				electric = massive and 0 or love.math.random() > 0.5 and 1 or -1
 			},
 			massive and 1000 or 1,
 			pos + vec2(500, 400),
@@ -43,23 +46,20 @@ function love.update(dt)
 		if love.mouse.isDown(1) then
 			newParticle(
 				{
-					electric = 1,
-					strange = 0
+					electric = 1
 				},
 			1, vec2(love.mouse.getPosition()) + randCircle(brushRadius))
 		end
 		if love.mouse.isDown(2) then
 			newParticle(
 				{
-					electric = -1,
-					strange = 0
+					electric = -1
 				},
 			1, vec2(love.mouse.getPosition()) + randCircle(brushRadius))
 		end
 		if love.mouse.isDown(3) then
 				newParticle({
-					electric = 0,
-					strange = 0
+					electric = 0
 				},
 			1000, vec2(love.mouse.getPosition()) + randCircle(brushRadius))
 		end
@@ -79,10 +79,25 @@ function love.update(dt)
 
 			for j = i + 1, particles.size do
 				local particleB = particles:get(j)
-				electricForce(particleA, particleB, dt)
-				personalSpaceForce(particleA, particleB, dt)
-				gravitationalForce(particleA, particleB, dt)
-				strangeForce(particleA, particleB, dt)
+
+				local difference = particleB.position - particleA.position
+				local distance = #difference
+				if distance > 0 then
+					local direction = difference / distance
+					local force = 0
+
+					-- Electric force
+					local electricForceStrength = 500
+					force = force + electricForceStrength * -1 * particleA.charges.electric * particleB.charges.electric * math.min(1, distance ^ -1)
+
+					-- Gravity
+					local gravitationalForceStrength = 1
+					force = force + gravitationalForceStrength * particleA.mass * particleB.mass * math.min(1.0, distance ^ -1)
+
+					force = force * direction
+					particleA.velocity = particleA.velocity + force / particleA.mass * dt
+					particleB.velocity = particleB.velocity - force / particleB.mass * dt
+				end
 			end
 		end
 	end
@@ -105,92 +120,4 @@ function newParticle(charges, mass, pos, vel)
 	particle.mass = 1
 	particle.colour = {particle.charges.electric, 0.5, -particle.charges.electric, 1}
 	particles:add(particle)
-end
-
-function electricForce(particleA, particleB, dt)
-	local electricForceStrength = 500
-
-	local difference = particleB.position - particleA.position
-	local distance = #difference
-	local direction
-	if distance > 0 then
-		direction = difference / distance
-	else
-		direction = vec2(0, 0)
-	end
-
-	local force = -1 * electricForceStrength * particleA.charges.electric * particleB.charges.electric * math.min(1.0, distance ^ -1)
-	if force ~= force then -- Distance is zero
-		return
-	end
-	force = force * direction
-
-	particleA.velocity = particleA.velocity + force / particleA.mass * dt
-	particleB.velocity = particleB.velocity - force / particleB.mass * dt
-end
-
-function gravitationalForce(particleA, particleB, dt)
-	local gravitationalForceStrength = 1
-
-	local difference = particleB.position - particleA.position
-	local distance = #difference
-	local direction
-	if distance > 0 then
-		direction = difference / distance
-	else
-		direction = vec2(0, 0)
-	end
-
-	local force = gravitationalForceStrength * particleA.mass * particleB.mass * math.min(1.0, distance ^ -1)
-	if force ~= force then -- Distance is zero
-		return
-	end
-	force = force * direction
-
-	particleA.velocity = particleA.velocity + force / particleA.mass * dt
-	particleB.velocity = particleB.velocity - force / particleB.mass * dt
-end
-
-function personalSpaceForce(particleA, particleB, dt)
-	local personalSpaceForceStrength = 2000
-
-	local difference = particleB.position - particleA.position
-	local distance = #difference
-	local direction
-	if distance > 0 then
-		direction = difference / distance
-	else
-		direction = vec2(0, 0)
-	end
-
-	local velocityDifference = particleB.velocity - particleA.velocity
-	local motionTowardsEachOther = vec2.dot(velocityDifference, -difference)
-	local force = math.max(-1, -1 * personalSpaceForceStrength * distance ^ -5) * motionTowardsEachOther
-	if force ~= force then -- Distance is zero
-		return
-	end
-	force = force * direction
-
-	particleA.velocity = particleA.velocity + force / particleA.mass * dt
-	particleB.velocity = particleB.velocity - force / particleB.mass * dt
-end
-
-function strangeForce(particleA, particleB, dt)
-	local strangeForceStrength = 10000
-
-	local difference = particleB.position - particleA.position
-	local distance = #difference
-	local direction
-	if distance > 0 then
-		direction = difference / distance
-	else
-		direction = vec2(0, 0)
-	end
-
-	local offset = 100
-	local force = strangeForceStrength * particleA.charges.strange * particleB.charges.strange * 1/(math.exp(distance-offset)+math.exp(-(distance-offset))) -- random bell shaped curve: sech
-	force = force * direction
-
-	particleA.velocity = particleA.velocity + force / particleA.mass * dt
-	particleB.velocity = particleB.velocity - force / particleB.mass * dt
 end
