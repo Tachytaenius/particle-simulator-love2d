@@ -16,17 +16,19 @@ end
 --[[
 	Charges:
 	Electric: Real number
+	Personal space: Positive real number
 ]]
 
 function love.load()
 	particles = list()
 
-	for _=1, 300 do
-		local massive = love.math.random() > 0.75
-		local pos = randCircle(150)
+	for _=1, 500 do
+		local massive = love.math.random() > 0.25
+		local pos = randCircle(100)
 		newParticle(
 			{
-				electric = massive and 0 or love.math.random() > 0.5 and 1 or -1
+				electric = massive and 0 or love.math.random() > 0.5 and 1 or -1,
+				personalSpace = massive and 1 or 0
 			},
 			massive and 1000 or 1,
 			pos + vec2(500, 400),
@@ -46,20 +48,23 @@ function love.update(dt)
 		if love.mouse.isDown(1) then
 			newParticle(
 				{
-					electric = 1
+					electric = 1,
+					personalSpace = 0
 				},
 			1, vec2(love.mouse.getPosition()) + randCircle(brushRadius))
 		end
 		if love.mouse.isDown(2) then
 			newParticle(
 				{
-					electric = -1
+					electric = -1,
+					personalSpace = 0
 				},
 			1, vec2(love.mouse.getPosition()) + randCircle(brushRadius))
 		end
 		if love.mouse.isDown(3) then
 				newParticle({
-					electric = 0
+					electric = 0,
+					personalSpace = 1
 				},
 			1000, vec2(love.mouse.getPosition()) + randCircle(brushRadius))
 		end
@@ -93,6 +98,11 @@ function love.update(dt)
 					-- Gravity
 					local gravitationalForceStrength = 1
 					force = force + gravitationalForceStrength * particleA.mass * particleB.mass * math.min(1.0, distance ^ -1)
+
+					-- Personal space force
+					local personalSpaceForceStrength = 2000
+					force = force + -1 * personalSpaceForceStrength * particleA.charges.personalSpace * particleB.charges.personalSpace * math.min(1.0, distance ^ -4)
+						* particleA.mass * particleB.mass * math.min(1, math.max(0, -vec2.dot(difference, particleB.velocity - particleA.velocity)))
 
 					force = force * direction
 					particleA.velocity = particleA.velocity + force / particleA.mass * dt
