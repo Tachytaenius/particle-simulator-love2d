@@ -117,7 +117,7 @@ function love.draw()
 	love.graphics.setPointSize(2)
 	for i = 1, particles.size do
 		local particle = particles:get(i)
-		love.graphics.setColor(particle.colour)
+		love.graphics.setColor(particle.charges.electric, 0.5, -particle.charges.electric)
 		love.graphics.points(particle.position.x, particle.position.y)
 	end
 end
@@ -128,6 +128,5 @@ function newParticle(charges, mass, pos, vel)
 	particle.velocity = vel or vec2()
 	particle.charges = charges
 	particle.mass = 1
-	particle.colour = {particle.charges.electric, 0.5, -particle.charges.electric, 1}
 	particles:add(particle)
 end
