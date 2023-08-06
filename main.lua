@@ -43,7 +43,7 @@ end
 
 function love.update(dt)
 	-- Add to simulation
-	local brushRadius = 1
+	local brushRadius = 15
 	if not love.keyboard.isDown("lshift") or spawnIfHoldingShift then
 		if love.mouse.isDown(1) then
 			newParticle(
