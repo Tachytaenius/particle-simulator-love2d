@@ -1,6 +1,7 @@
 math.tau = math.pi * 2
 
 local vec2 = require("lib.mathsies").vec2
+local vec3 = require("lib.mathsies").vec3
 local list = require("lib.list")
 
 local particles
@@ -17,24 +18,96 @@ end
 	Charges:
 	Electric: Real number
 	Personal space: Positive real number
+	Colour charge: vec3
 ]]
 
 function love.load()
 	particles = list()
 
-	for _=1, 500 do
-		local massive = love.math.random() > 0.25
-		local pos = randCircle(100)
-		newParticle(
-			{
-				electric = massive and 0 or love.math.random() > 0.5 and 1 or -1,
-				personalSpace = massive and 1 or 0
-			},
-			massive and 1000 or 1,
-			pos + vec2(500, 400),
-			vec2(-pos.y, pos.x) * 0.05
-		)
-	end
+	-- for _=1, 50 do
+	-- 	local pos = randCircle(100)
+	-- 	local colourSelector = love.math.random()
+	-- 	local red, green, blue
+	-- 	if colourSelector < 1/3 then
+	-- 		red = true
+	-- 	elseif colourSelector < 2/3 then
+	-- 		green = true
+	-- 	elseif colourSelector < 3/3 then
+	-- 		blue = true
+	-- 	end
+	-- 	newParticle(
+	-- 		{
+	-- 			electric = 0,
+	-- 			personalSpace = 1,
+	-- 			colour = red and vec3(1, 0, 0) or green and vec3(0, 1, 0) or vec3(0, 0, 1)
+	-- 		},
+	-- 		1,
+	-- 		pos + vec2(500, 400),
+	-- 		vec2(-pos.y, pos.x) * 0.05
+	-- 	)
+	-- end
+
+	newParticle(
+		{
+			electric = 0,
+			personalSpace = 1,
+			colour = vec3(1, 0, 0)
+		},
+		1,
+		vec2(200, 200),
+		vec2()
+	)
+	newParticle(
+		{
+			electric = 0,
+			personalSpace = 1,
+			colour = vec3(0, 1, 0)
+		},
+		1,
+		vec2(300, 200),
+		vec2()
+	)
+	newParticle(
+		{
+			electric = 0,
+			personalSpace = 1,
+			colour = vec3(0, 0, 1)
+		},
+		1,
+		vec2(200, 300),
+		vec2()
+	)
+
+	newParticle(
+		{
+			electric = 0,
+			personalSpace = 1,
+			colour = vec3(1, 0, 0)
+		},
+		1,
+		vec2(800, 200),
+		vec2()
+	)
+	newParticle(
+		{
+			electric = 0,
+			personalSpace = 1,
+			colour = vec3(0, 1, 0)
+		},
+		1,
+		vec2(900, 200),
+		vec2()
+	)
+	newParticle(
+		{
+			electric = 0,
+			personalSpace = 1,
+			colour = vec3(0, 0, 1)
+		},
+		1,
+		vec2(800, 300),
+		vec2()
+	)
 end
 
 function love.mousepressed()
@@ -49,7 +122,8 @@ function love.update(dt)
 			newParticle(
 				{
 					electric = 1,
-					personalSpace = 0
+					personalSpace = 0,
+					colour = vec3()
 				},
 			1, vec2(love.mouse.getPosition()) + randCircle(brushRadius))
 		end
@@ -57,14 +131,16 @@ function love.update(dt)
 			newParticle(
 				{
 					electric = -1,
-					personalSpace = 0
+					personalSpace = 0,
+					colour = vec3()
 				},
 			1, vec2(love.mouse.getPosition()) + randCircle(brushRadius))
 		end
 		if love.mouse.isDown(3) then
 				newParticle({
 					electric = 0,
-					personalSpace = 1
+					personalSpace = 1,
+					colour = vec3()
 				},
 			1000, vec2(love.mouse.getPosition()) + randCircle(brushRadius))
 		end
@@ -100,9 +176,13 @@ function love.update(dt)
 					force = force + gravitationalForceStrength * particleA.mass * particleB.mass * math.min(1.0, distance ^ -1)
 
 					-- Personal space force
-					local personalSpaceForceStrength = 2000
+					local personalSpaceForceStrength = 2000000 -- TEMP for visibility of "baryons": please replace with 2000 again
 					force = force + -1 * personalSpaceForceStrength * particleA.charges.personalSpace * particleB.charges.personalSpace * math.min(1.0, distance ^ -4)
 						* particleA.mass * particleB.mass * math.min(1, math.max(0, -vec2.dot(difference, particleB.velocity - particleA.velocity)))
+					
+					-- Charm force
+					local charmForceStrength = 1000
+					force = force + charmForceStrength * vec3.distance(particleA.charges.colour, particleB.charges.colour) * math.min(1, distance ^ -1)
 
 					force = force * direction
 					particleA.velocity = particleA.velocity + force / particleA.mass * dt
@@ -117,7 +197,8 @@ function love.draw()
 	love.graphics.setPointSize(2)
 	for i = 1, particles.size do
 		local particle = particles:get(i)
-		love.graphics.setColor(particle.colour)
+		local colourColour = particle.charges.colour / 2 + 0.5
+		love.graphics.setColor(colourColour.x, colourColour.y, colourColour.z)
 		love.graphics.points(particle.position.x, particle.position.y)
 	end
 end
