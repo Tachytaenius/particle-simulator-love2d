@@ -4,6 +4,7 @@ local vec2 = require("lib.mathsies").vec2
 local list = require("lib.list")
 
 local particles
+local colourMode
 local spawnIfHoldingShift
 
 -- Functions
@@ -35,6 +36,8 @@ function love.load()
 			vec2(-pos.y, pos.x) * 0.05
 		)
 	end
+	
+	colourMode = "electricCharge"
 end
 
 function love.mousepressed()
@@ -77,6 +80,7 @@ function love.update(dt)
 		local dt = dt / timestepDivisions
 		for i = 1, particles.size do
 			local particle = particles:get(i)
+			particle.feltForce = vec2()
 			particle.position = particle.position + particle.velocity * dt
 		end
 		for i = 1, particles.size - 1 do
@@ -91,7 +95,7 @@ function love.update(dt)
 					local direction = difference / distance
 					local force = 0
 
-					-- Electric force
+					-- -- Electric force
 					local electricForceStrength = 500
 					force = force + electricForceStrength * -1 * particleA.charges.electric * particleB.charges.electric * math.min(1, distance ^ -1)
 
@@ -107,9 +111,36 @@ function love.update(dt)
 					force = force * direction
 					particleA.velocity = particleA.velocity + force / particleA.mass * dt
 					particleB.velocity = particleB.velocity - force / particleB.mass * dt
+					particleA.feltForce = particleA.feltForce + force
+					particleB.feltForce = particleB.feltForce - force
 				end
 			end
 		end
+	end
+end
+
+local function hsv2rgb(h, s, v)
+	if s == 0 then
+		return v, v, v
+	end
+	local _h = h / 60
+	local i = math.floor(_h)
+	local f = _h - i
+	local p = v * (1 - s)
+	local q = v * (1 - f * s)
+	local t = v * (1 - (1 - f) * s)
+	if i == 0 then
+		return v, t, p
+	elseif i == 1 then
+		return q, v, p
+	elseif i == 2 then
+		return p, v, t
+	elseif i == 3 then
+		return p, q, v
+	elseif i == 4 then
+		return t, p, v
+	elseif i == 5 then
+		return v, p, q
 	end
 end
 
@@ -117,7 +148,18 @@ function love.draw()
 	love.graphics.setPointSize(2)
 	for i = 1, particles.size do
 		local particle = particles:get(i)
-		love.graphics.setColor(particle.charges.electric, 0.5, -particle.charges.electric)
+		if colourMode == "electricCharge" then
+			love.graphics.setColor(particle.charges.electric, 0.5, -particle.charges.electric)
+		elseif colourMode == "electricAndPersonalSpaceCharge" then
+			love.graphics.setColor(particle.charges.electric * 0.5 + 0.5, particle.charges.personalSpace, 1)
+		elseif colourMode == "hsv" then
+			local angle = vec2.toAngle(particle.velocity) % math.tau
+			local speed = #particle.velocity
+			local hue = math.deg(angle)
+			local saturation = math.min(1, math.abs(#particle.feltForce) / 10)
+			local value = math.min(1, speed / 10)
+			love.graphics.setColor(hsv2rgb(hue, saturation, value))
+		end
 		love.graphics.points(particle.position.x, particle.position.y)
 	end
 end
