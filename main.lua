@@ -18,18 +18,21 @@ end
 	Charges:
 	Electric: Real number
 	Personal space: Positive real number
+	Curious: Real number
 ]]
 
 function love.load()
 	particles = list()
 
 	for _=1, 500 do
-		local massive = love.math.random() > 0.25
+		local curious = love.math.random() < 1
+		local massive = not curious and love.math.random() < 0.75
 		local pos = randCircle(100)
 		newParticle(
 			{
-				electric = massive and 0 or love.math.random() > 0.5 and 1 or -1,
-				personalSpace = massive and 1 or 0
+				electric = (massive or curious) and 0 or love.math.random() > 0.5 and 1 or -1,
+				personalSpace = massive and 1 or 0,
+				curious = curious and (love.math.random() < 0.5 and 1 or -1) or 0
 			},
 			massive and 1000 or 1,
 			pos + vec2(500, 400),
@@ -37,7 +40,7 @@ function love.load()
 		)
 	end
 	
-	colourMode = "electricCharge"
+	colourMode = "curiousCharge"
 end
 
 function love.mousepressed()
@@ -52,7 +55,8 @@ function love.update(dt)
 			newParticle(
 				{
 					electric = 1,
-					personalSpace = 0
+					personalSpace = 0,
+					curious = 0
 				},
 			1, vec2(love.mouse.getPosition()) + randCircle(brushRadius))
 		end
@@ -60,14 +64,16 @@ function love.update(dt)
 			newParticle(
 				{
 					electric = -1,
-					personalSpace = 0
+					personalSpace = 0,
+					curious = 0
 				},
 			1, vec2(love.mouse.getPosition()) + randCircle(brushRadius))
 		end
 		if love.mouse.isDown(3) then
 				newParticle({
 					electric = 0,
-					personalSpace = 1
+					personalSpace = 1,
+					curious = 0
 				},
 			1000, vec2(love.mouse.getPosition()) + randCircle(brushRadius))
 		end
@@ -107,6 +113,10 @@ function love.update(dt)
 					local personalSpaceForceStrength = 2000
 					force = force + -1 * personalSpaceForceStrength * particleA.charges.personalSpace * particleB.charges.personalSpace * math.min(1.0, distance ^ -4)
 						* particleA.mass * particleB.mass * math.min(1, math.max(0, -vec2.dot(difference, particleB.velocity - particleA.velocity)))
+
+					-- Curious force
+					local curiousForceStrength = 1
+					force = force + -1 * curiousForceStrength * particleA.charges.curious * particleB.charges.curious * distance -- TODO: Make curious force fall off again after a particular distance
 
 					force = force * direction
 					particleA.velocity = particleA.velocity + force / particleA.mass * dt
@@ -150,6 +160,8 @@ function love.draw()
 		local particle = particles:get(i)
 		if colourMode == "electricCharge" then
 			love.graphics.setColor(particle.charges.electric, 0.5, -particle.charges.electric)
+		elseif colourMode == "curiousCharge" then
+			love.graphics.setColor(particle.charges.curious, 0.5, -particle.charges.curious)
 		elseif colourMode == "electricAndPersonalSpaceCharge" then
 			love.graphics.setColor(particle.charges.electric * 0.5 + 0.5, particle.charges.personalSpace, 1)
 		elseif colourMode == "hsv" then
