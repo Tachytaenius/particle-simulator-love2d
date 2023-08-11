@@ -38,8 +38,8 @@ local charmChargeColours = {
 function love.load()
 	particles = list()
 
-	for _=1, 50 do
-		local pos = randCircle(100)
+	for _=1, 0 do
+		local pos = randCircle(500)
 		local colourSelector = love.math.random()
 		local red, green, blue
 		if colourSelector < 1/3 then
@@ -49,12 +49,13 @@ function love.load()
 		elseif colourSelector < 3/3 then
 			blue = true
 		end
+		local anti = love.math.random() < 0.5
+		local up = love.math.random() < 0.5
 		newParticle(
 			{
-				electric = 0,
-				personalSpace = 1,
-				charm = charmChargeNamesByIndex[love.math.random(#charmChargeNamesByIndex)]
-				-- charm = charmChargeNamesByIndex[love.math.random(0, 2) * 2 + 1]
+				electric = (anti and -1 or 1) * (up and 2/3 or -1/3),
+				personalSpace = 20,
+				charm = charmChargeNamesByIndex[love.math.random(0, 2) * 2 + (anti and 1 or 0) + 1]
 			},
 			1,
 			pos + vec2(500, 400),
@@ -64,64 +65,44 @@ function love.load()
 
 	newParticle(
 		{
-			electric = 0,
+			electric = 2/3,
 			personalSpace = 20,
 			charm = "red"
 		},
-		1,
-		vec2(200, 200),
+		50,
+		vec2(300, 300),
 		vec2()
 	)
 	newParticle(
 		{
-			electric = 0,
+			electric = 2/3,
 			personalSpace = 20,
 			charm = "green"
 		},
-		1,
-		vec2(300, 200),
+		50,
+		vec2(350, 300),
 		vec2()
 	)
 	newParticle(
 		{
-			electric = 0,
+			electric = -1/3,
 			personalSpace = 20,
 			charm = "blue"
 		},
-		1,
-		vec2(200, 300),
+		50,
+		vec2(300, 350),
 		vec2()
 	)
 
 	newParticle(
 		{
-			electric = 0,
-			personalSpace = 20,
-			charm = "red"
+			electric = -1,
+			personalSpace = 0,
+			charm = nil
 		},
 		1,
-		vec2(800, 200),
-		vec2()
-	)
-	newParticle(
-		{
-			electric = 0,
-			personalSpace = 20,
-			charm = "green"
-		},
-		1,
-		vec2(900, 200),
-		vec2()
-	)
-	newParticle(
-		{
-			electric = 0,
-			personalSpace = 20,
-			charm = "blue"
-		},
-		1,
-		vec2(800, 300),
-		vec2()
+		vec2(300, 200),
+		vec2(20, 0)
 	)
 end
 
@@ -191,7 +172,7 @@ function love.update(dt)
 					force = force + gravitationalForceStrength * particleA.mass * particleB.mass * math.min(1.0, distance ^ -1)
 
 					-- Personal space force
-					local personalSpaceForceStrength = 2000 -- TEMP for visibility of "baryons": please replace with 2000 again
+					local personalSpaceForceStrength = 2000
 					force = force + -1 * personalSpaceForceStrength * particleA.charges.personalSpace * particleB.charges.personalSpace * math.min(1.0, distance ^ -4)
 						* particleA.mass * particleB.mass * math.min(1, math.max(0, -vec2.dot(difference, particleB.velocity - particleA.velocity)))
 					
@@ -199,7 +180,7 @@ function love.update(dt)
 					local charmA = particleA.charges.charm
 					local charmB = particleB.charges.charm
 					if charmA and charmB then
-						local charmForceStrength = 1000
+						local charmForceStrength = 2000
 						local charmAOpposite = charmChargeNamesByIndex[(charmChargeIndicesByName[charmA] - 1 + 3) % 6 + 1]
 						local charmAAdjacentNeg = charmChargeNamesByIndex[(charmChargeIndicesByName[charmA] - 1 - 1) % 6 + 1]
 						local charmAAdjacentPos = charmChargeNamesByIndex[(charmChargeIndicesByName[charmA] - 1 + 1) % 6 + 1]
@@ -213,7 +194,7 @@ function love.update(dt)
 						else
 							charmMultiplier = 1
 						end
-						force = force + charmForceStrength * charmMultiplier * math.min(1, distance ^ -1)
+						force = force + charmForceStrength * charmMultiplier * math.min(1, distance ^ -1.5)
 					end
 
 					force = force * direction
@@ -226,9 +207,12 @@ function love.update(dt)
 end
 
 function love.draw()
-	love.graphics.setPointSize(2)
 	for i = 1, particles.size do
+		love.graphics.setPointSize(2)
 		local particle = particles:get(i)
+		if particle.charges.electric > 0 then
+			love.graphics.setPointSize(3)
+		end
 		if not particle.charges.charm then
 			love.graphics.setColor(0.5, 0.5, 0.5)
 		else
