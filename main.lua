@@ -14,44 +14,59 @@ local function randCircle(r)
 	return vec2.rotate(vec2(love.math.random() ^ 0.5 * r, 0), love.math.random() * math.tau)
 end
 
+local charmChargeNamesByIndex = {"red", "yellow", "green", "cyan", "blue", "magenta"}
+local charmChargeIndicesByName = {}
+for i, v in ipairs(charmChargeNamesByIndex) do
+	charmChargeIndicesByName[v] = i
+end
+local charmChargeColours = {
+	red = {1, 0, 0},
+	yellow = {1, 1, 0},
+	green = {0, 1, 0},
+	cyan = {0, 1, 1},
+	blue = {0, 0, 1},
+	magenta = {1, 0, 1}
+}
+
 --[[
 	Charges:
 	Electric: Real number
 	Personal space: Positive real number
-	Colour charge: vec3
+	Charm: String name of one of the six primary/secondary colours of light
 ]]
 
 function love.load()
 	particles = list()
 
-	-- for _=1, 50 do
-	-- 	local pos = randCircle(100)
-	-- 	local colourSelector = love.math.random()
-	-- 	local red, green, blue
-	-- 	if colourSelector < 1/3 then
-	-- 		red = true
-	-- 	elseif colourSelector < 2/3 then
-	-- 		green = true
-	-- 	elseif colourSelector < 3/3 then
-	-- 		blue = true
-	-- 	end
-	-- 	newParticle(
-	-- 		{
-	-- 			electric = 0,
-	-- 			personalSpace = 1,
-	-- 			colour = red and vec3(1, 0, 0) or green and vec3(0, 1, 0) or vec3(0, 0, 1)
-	-- 		},
-	-- 		1,
-	-- 		pos + vec2(500, 400),
-	-- 		vec2(-pos.y, pos.x) * 0.05
-	-- 	)
-	-- end
+	for _=1, 50 do
+		local pos = randCircle(100)
+		local colourSelector = love.math.random()
+		local red, green, blue
+		if colourSelector < 1/3 then
+			red = true
+		elseif colourSelector < 2/3 then
+			green = true
+		elseif colourSelector < 3/3 then
+			blue = true
+		end
+		newParticle(
+			{
+				electric = 0,
+				personalSpace = 1,
+				charm = charmChargeNamesByIndex[love.math.random(#charmChargeNamesByIndex)]
+				-- charm = charmChargeNamesByIndex[love.math.random(0, 2) * 2 + 1]
+			},
+			1,
+			pos + vec2(500, 400),
+			vec2(-pos.y, pos.x) * 0.05
+		)
+	end
 
 	newParticle(
 		{
 			electric = 0,
 			personalSpace = 1,
-			colour = vec3(1, 0, 0)
+			charm = "red"
 		},
 		1,
 		vec2(200, 200),
@@ -61,7 +76,7 @@ function love.load()
 		{
 			electric = 0,
 			personalSpace = 1,
-			colour = vec3(0, 1, 0)
+			charm = "green"
 		},
 		1,
 		vec2(300, 200),
@@ -71,7 +86,7 @@ function love.load()
 		{
 			electric = 0,
 			personalSpace = 1,
-			colour = vec3(0, 0, 1)
+			charm = "blue"
 		},
 		1,
 		vec2(200, 300),
@@ -82,7 +97,7 @@ function love.load()
 		{
 			electric = 0,
 			personalSpace = 1,
-			colour = vec3(1, 0, 0)
+			charm = "red"
 		},
 		1,
 		vec2(800, 200),
@@ -92,7 +107,7 @@ function love.load()
 		{
 			electric = 0,
 			personalSpace = 1,
-			colour = vec3(0, 1, 0)
+			charm = "green"
 		},
 		1,
 		vec2(900, 200),
@@ -102,7 +117,7 @@ function love.load()
 		{
 			electric = 0,
 			personalSpace = 1,
-			colour = vec3(0, 0, 1)
+			charm = "blue"
 		},
 		1,
 		vec2(800, 300),
@@ -181,8 +196,25 @@ function love.update(dt)
 						* particleA.mass * particleB.mass * math.min(1, math.max(0, -vec2.dot(difference, particleB.velocity - particleA.velocity)))
 					
 					-- Charm force
-					local charmForceStrength = 1000
-					force = force + charmForceStrength * vec3.distance(particleA.charges.colour, particleB.charges.colour) * math.min(1, distance ^ -1)
+					local charmA = particleA.charges.charm
+					local charmB = particleB.charges.charm
+					if charmA and charmB then
+						local charmForceStrength = 1000
+						local charmAOpposite = charmChargeNamesByIndex[(charmChargeIndicesByName[charmA] - 1 + 3) % 6 + 1]
+						local charmAAdjacentNeg = charmChargeNamesByIndex[(charmChargeIndicesByName[charmA] - 1 - 1) % 6 + 1]
+						local charmAAdjacentPos = charmChargeNamesByIndex[(charmChargeIndicesByName[charmA] - 1 + 1) % 6 + 1]
+						local charmMultiplier
+						if charmA == charmB then
+							charmMultiplier = -2
+						elseif charmB == charmAOpposite then
+							charmMultiplier = 1
+						elseif charmB == charmAAdjacentNeg or charmB == charmAAdjacentPos then
+							charmMultiplier = -0.5
+						else
+							charmMultiplier = 1
+						end
+						force = force + charmForceStrength * charmMultiplier * math.min(1, distance ^ -1)
+					end
 
 					force = force * direction
 					particleA.velocity = particleA.velocity + force / particleA.mass * dt
@@ -197,8 +229,11 @@ function love.draw()
 	love.graphics.setPointSize(2)
 	for i = 1, particles.size do
 		local particle = particles:get(i)
-		local colourColour = particle.charges.colour / 2 + 0.5
-		love.graphics.setColor(colourColour.x, colourColour.y, colourColour.z)
+		if not particle.charges.charm then
+			love.graphics.setColor(0.5, 0.5, 0.5)
+		else
+			love.graphics.setColor(charmChargeColours[particle.charges.charm])
+		end
 		love.graphics.points(particle.position.x, particle.position.y)
 	end
 end
