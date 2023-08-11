@@ -69,7 +69,7 @@ function love.load()
 			personalSpace = 20,
 			charm = "red"
 		},
-		50,
+		200,
 		vec2(300, 300),
 		vec2()
 	)
@@ -79,7 +79,7 @@ function love.load()
 			personalSpace = 20,
 			charm = "green"
 		},
-		50,
+		200,
 		vec2(350, 300),
 		vec2()
 	)
@@ -89,7 +89,7 @@ function love.load()
 			personalSpace = 20,
 			charm = "blue"
 		},
-		50,
+		200,
 		vec2(300, 350),
 		vec2()
 	)
@@ -101,8 +101,8 @@ function love.load()
 			charm = nil
 		},
 		1,
-		vec2(300, 200),
-		vec2(20, 0)
+		vec2(300, 250),
+		vec2(20, -5)
 	)
 end
 
