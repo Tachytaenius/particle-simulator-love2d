@@ -65,7 +65,7 @@ function love.load()
 	newParticle(
 		{
 			electric = 0,
-			personalSpace = 1,
+			personalSpace = 20,
 			charm = "red"
 		},
 		1,
@@ -75,7 +75,7 @@ function love.load()
 	newParticle(
 		{
 			electric = 0,
-			personalSpace = 1,
+			personalSpace = 20,
 			charm = "green"
 		},
 		1,
@@ -85,7 +85,7 @@ function love.load()
 	newParticle(
 		{
 			electric = 0,
-			personalSpace = 1,
+			personalSpace = 20,
 			charm = "blue"
 		},
 		1,
@@ -96,7 +96,7 @@ function love.load()
 	newParticle(
 		{
 			electric = 0,
-			personalSpace = 1,
+			personalSpace = 20,
 			charm = "red"
 		},
 		1,
@@ -106,7 +106,7 @@ function love.load()
 	newParticle(
 		{
 			electric = 0,
-			personalSpace = 1,
+			personalSpace = 20,
 			charm = "green"
 		},
 		1,
@@ -116,7 +116,7 @@ function love.load()
 	newParticle(
 		{
 			electric = 0,
-			personalSpace = 1,
+			personalSpace = 20,
 			charm = "blue"
 		},
 		1,
@@ -191,7 +191,7 @@ function love.update(dt)
 					force = force + gravitationalForceStrength * particleA.mass * particleB.mass * math.min(1.0, distance ^ -1)
 
 					-- Personal space force
-					local personalSpaceForceStrength = 2000000 -- TEMP for visibility of "baryons": please replace with 2000 again
+					local personalSpaceForceStrength = 2000 -- TEMP for visibility of "baryons": please replace with 2000 again
 					force = force + -1 * personalSpaceForceStrength * particleA.charges.personalSpace * particleB.charges.personalSpace * math.min(1.0, distance ^ -4)
 						* particleA.mass * particleB.mass * math.min(1, math.max(0, -vec2.dot(difference, particleB.velocity - particleA.velocity)))
 					
