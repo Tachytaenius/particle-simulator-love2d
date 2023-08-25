@@ -116,7 +116,8 @@ function love.update(dt)
 
 					-- Curious force
 					local curiousForceStrength = 1
-					force = force + -1 * curiousForceStrength * particleA.charges.curious * particleB.charges.curious * distance -- TODO: Make curious force fall off again after a particular distance
+					local curiousForceZero = 50
+					force = force + -1 * curiousForceStrength * particleA.charges.curious * particleB.charges.curious * math.min(distance, math.max(0, -distance + curiousForceZero))
 
 					force = force * direction
 					particleA.velocity = particleA.velocity + force / particleA.mass * dt
