@@ -27,6 +27,14 @@ local charmChargeColours = {
 	blue = {0, 0, 1},
 	magenta = {1, 0, 1}
 }
+local charmChargeColoursVectors = {
+	red = vec3(1, 0, 0),
+	yellow = vec3(1, 1, 0),
+	green = vec3(0, 1, 0),
+	cyan = vec3(0, 1, 1),
+	blue = vec3(0, 0, 1),
+	magenta = vec3(1, 0, 1)
+}
 
 --[[
 	Charges:
@@ -38,29 +46,29 @@ local charmChargeColours = {
 function love.load()
 	particles = list()
 
-	for _=1, 50 do
-		local pos = randCircle(100)
-		local colourSelector = love.math.random()
-		local red, green, blue
-		if colourSelector < 1/3 then
-			red = true
-		elseif colourSelector < 2/3 then
-			green = true
-		elseif colourSelector < 3/3 then
-			blue = true
-		end
-		newParticle(
-			{
-				electric = 0,
-				personalSpace = 1,
-				charm = charmChargeNamesByIndex[love.math.random(#charmChargeNamesByIndex)]
-				-- charm = charmChargeNamesByIndex[love.math.random(0, 2) * 2 + 1]
-			},
-			1,
-			pos + vec2(500, 400),
-			vec2(-pos.y, pos.x) * 0.05
-		)
-	end
+	-- for _=1, 50 do
+	-- 	local pos = randCircle(100)
+	-- 	local colourSelector = love.math.random()
+	-- 	local red, green, blue
+	-- 	if colourSelector < 1/3 then
+	-- 		red = true
+	-- 	elseif colourSelector < 2/3 then
+	-- 		green = true
+	-- 	elseif colourSelector < 3/3 then
+	-- 		blue = true
+	-- 	end
+	-- 	newParticle(
+	-- 		{
+	-- 			electric = 0,
+	-- 			personalSpace = 1,
+	-- 			charm = charmChargeNamesByIndex[love.math.random(#charmChargeNamesByIndex)]
+	-- 			-- charm = charmChargeNamesByIndex[love.math.random(0, 2) * 2 + 1]
+	-- 		},
+	-- 		1,
+	-- 		pos + vec2(500, 400),
+	-- 		vec2(-pos.y, pos.x) * 0.05
+	-- 	)
+	-- end
 
 	newParticle(
 		{
@@ -97,7 +105,7 @@ function love.load()
 		{
 			electric = 0,
 			personalSpace = 20,
-			charm = "red"
+			charm = "cyan"
 		},
 		1,
 		vec2(800, 200),
@@ -107,7 +115,7 @@ function love.load()
 		{
 			electric = 0,
 			personalSpace = 20,
-			charm = "green"
+			charm = "magenta"
 		},
 		1,
 		vec2(900, 200),
@@ -117,7 +125,7 @@ function love.load()
 		{
 			electric = 0,
 			personalSpace = 20,
-			charm = "blue"
+			charm = "yellow"
 		},
 		1,
 		vec2(800, 300),
@@ -164,6 +172,7 @@ function love.update(dt)
 
 	-- Simulate
 	local timestepDivisions = 1
+	local charmForceStrength = 1000
 	for i = 1, timestepDivisions do
 		local dt = dt / timestepDivisions
 		for i = 1, particles.size do
@@ -199,18 +208,21 @@ function love.update(dt)
 					local charmA = particleA.charges.charm
 					local charmB = particleB.charges.charm
 					if charmA and charmB then
-						local charmForceStrength = 1000
 						local charmAOpposite = charmChargeNamesByIndex[(charmChargeIndicesByName[charmA] - 1 + 3) % 6 + 1]
-						local charmAAdjacentNeg = charmChargeNamesByIndex[(charmChargeIndicesByName[charmA] - 1 - 1) % 6 + 1]
-						local charmAAdjacentPos = charmChargeNamesByIndex[(charmChargeIndicesByName[charmA] - 1 + 1) % 6 + 1]
-						local charmMultiplier
-						if charmA == charmB then
-							charmMultiplier = -2
-						elseif charmB == charmAOpposite then
-							charmMultiplier = 1
-						elseif charmB == charmAAdjacentNeg or charmB == charmAAdjacentPos then
-							charmMultiplier = -0.5
-						else
+						-- local charmAAdjacentNeg = charmChargeNamesByIndex[(charmChargeIndicesByName[charmA] - 1 - 1) % 6 + 1]
+						-- local charmAAdjacentPos = charmChargeNamesByIndex[(charmChargeIndicesByName[charmA] - 1 + 1) % 6 + 1]
+						-- local charmMultiplier
+						-- if charmA == charmB then
+						-- 	charmMultiplier = -2
+						-- elseif charmB == charmAOpposite then
+						-- 	charmMultiplier = 1
+						-- elseif charmB == charmAAdjacentNeg or charmB == charmAAdjacentPos then
+						-- 	charmMultiplier = -0.5
+						-- else
+						-- 	charmMultiplier = 1
+						-- end
+						local charmMultiplier = 0
+						if charmB == charmAOpposite then
 							charmMultiplier = 1
 						end
 						force = force + charmForceStrength * charmMultiplier * math.min(1, distance ^ -1)
@@ -219,6 +231,63 @@ function love.update(dt)
 					force = force * direction
 					particleA.velocity = particleA.velocity + force / particleA.mass * dt
 					particleB.velocity = particleB.velocity - force / particleB.mass * dt
+				end
+			end
+		end
+		for i = 1, particles.size - 2 do
+			local particleA = particles:get(i)
+			for j = i + 1, particles.size - 1 do
+				local particleB = particles:get(j)
+				for k = j + 1, particles.size do
+					local particleC = particles:get(k)
+					local midpoint = (particleA.position + particleB.position + particleC.position) / 3
+					local weightedMidpoint =
+						(particleA.position * particleA.mass + particleB.position * particleB.mass + particleC.position * particleC.mass) /
+						(particleA.mass + particleB.mass + particleC.mass)
+					local charmA = particleA.charges.charm
+					local charmB = particleB.charges.charm
+					local charmC = particleC.charges.charm
+					if charmA and charmB and charmC then
+						-- HACK
+						local trio
+						local added = charmChargeColoursVectors[charmA] + charmChargeColoursVectors[charmB] + charmChargeColoursVectors[charmC]
+						if added == vec3(1, 1, 1) then
+							trio = true
+						elseif added == vec3(2, 2, 2) then -- Trio of anticolours
+							trio = true
+						else
+							trio = false
+						end
+						local trioStrengthMultiplier = 1
+						if trio then
+							if not (
+								particleA.position == midpoint and
+								particleB.position == midpoint and
+								particleC.position == midpoint
+							) then
+								local particleAToMidpoint = particleA.position - midpoint
+								local particleADistance = #particleAToMidpoint
+								local particleADirection = vec2.normalise(particleAToMidpoint)
+								if particleADistance > 0 then
+									particleA.velocity = particleA.velocity - particleADirection * math.min(1, particleADistance ^ -1) * charmForceStrength * trioStrengthMultiplier / particleA.mass * dt
+								end
+
+								local particleBToMidpoint = particleB.position - midpoint
+								local particleBDistance = #particleBToMidpoint
+								local particleBDirection = vec2.normalise(particleBToMidpoint)
+								if particleADistance > 0 then
+									particleB.velocity = particleB.velocity - particleBDirection * math.min(1, particleBDistance ^ -1) * charmForceStrength * trioStrengthMultiplier / particleB.mass * dt
+								end
+
+								local particleCToMidpoint = particleC.position - midpoint
+								local particleCDistance = #particleCToMidpoint
+								local particleCDirection = vec2.normalise(particleCToMidpoint)
+								if particleCDistance > 0 then
+									particleC.velocity = particleC.velocity - particleCDirection * math.min(1, particleCDistance ^ -1) * charmForceStrength * trioStrengthMultiplier / particleC.mass * dt
+								end
+							end
+						end
+					end
 				end
 			end
 		end
